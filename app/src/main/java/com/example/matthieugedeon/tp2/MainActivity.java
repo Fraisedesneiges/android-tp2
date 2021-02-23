@@ -3,8 +3,10 @@ package com.example.matthieugedeon.tp2;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -43,9 +45,19 @@ public class MainActivity extends AppCompatActivity {
     class authenticateThread extends Thread {
         public void run(){
             URL url = null;
+            EditText field1 = (EditText) findViewById(R.id.username_field);
+            EditText field2 = (EditText) findViewById(R.id.password_field);
+
+            String authConcat = field1.getText().toString() + ":" + field2.getText().toString();
             try {
-                url = new URL("https://www.android.com/");
+                url = new URL("https://httpbin.org/basic-auth/bob/sympa");
+
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+                String basicAuth = "Basic " + Base64.encodeToString(authConcat.getBytes(),
+                        Base64.NO_WRAP);
+                urlConnection.setRequestProperty ("Authorization", basicAuth);
+
                 try {
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     String s = readStream(in);
