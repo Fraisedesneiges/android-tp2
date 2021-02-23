@@ -43,6 +43,12 @@
             android:layout_height="wrap_content"
             android:onClick="authenticate"
             android:text="Authenticate" />
+
+        <TextView
+            android:id="@+id/auth_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TextView" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

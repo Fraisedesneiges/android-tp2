@@ -7,6 +7,9 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
+
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -42,11 +45,28 @@ public class MainActivity extends AppCompatActivity {
         return sb.toString();
     }
 
+    class parameterizedRunnable{
+        boolean res;
+        Runnable runnable;
+        parameterizedRunnable(boolean res){
+            this.res = res;
+            this.runnable = new Runnable() {
+                @Override
+                public void run() {
+                    TextView result = (TextView) findViewById(R.id.auth_result);
+                    result.setText("Connected: " + res);
+                }
+            };
+        }
+
+    }
+
     class authenticateThread extends Thread {
         public void run(){
             URL url = null;
             EditText field1 = (EditText) findViewById(R.id.username_field);
             EditText field2 = (EditText) findViewById(R.id.password_field);
+
 
             String authConcat = field1.getText().toString() + ":" + field2.getText().toString();
             try {
@@ -62,6 +82,24 @@ public class MainActivity extends AppCompatActivity {
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     String s = readStream(in);
                     Log.i("JFL", s);
+
+                    JSONObject result;
+                    try{
+                        result = new JSONObject(s);
+                    }
+                    catch(Exception e){
+                        result = new JSONObject();
+                    }
+
+                    parameterizedRunnable pr;
+                    try {
+                        pr = new parameterizedRunnable(result.getBoolean("authenticated"));
+                    }
+                    catch (Exception e){
+                        pr = new parameterizedRunnable(false);
+                    }
+
+                    runOnUiThread(pr.runnable);
                 } finally {
                     urlConnection.disconnect();
                 }
