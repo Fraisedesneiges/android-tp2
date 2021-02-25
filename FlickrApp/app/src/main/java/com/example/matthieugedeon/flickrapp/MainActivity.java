@@ -2,6 +2,7 @@ package com.example.matthieugedeon.flickrapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -39,6 +40,16 @@ public class MainActivity extends AppCompatActivity {
 
         Button b1=(Button)findViewById(R.id.fetch_button);
         b1.setOnClickListener(new GetImageOnClickListener());
+
+        Button b2 = (Button) findViewById(R.id.list_button);
+        b2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ListActivity.class);
+                //intent.putExtra(EXTRA_MESSAGE, concat);
+                startActivity(intent);
+            }
+        });
     }
 
     private String readStream(InputStream is) throws IOException {

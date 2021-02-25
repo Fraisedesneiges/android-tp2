@@ -13,11 +13,24 @@
         app:flow_horizontalAlign="center"
         app:flow_verticalAlign="center">
 
-        <Button
-            android:id="@+id/fetch_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Fetch images" />
+        <LinearLayout
+            android:layout_width="399dp"
+            android:layout_height="61dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/fetch_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fetch image" />
+
+            <Button
+                android:id="@+id/list_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Go to Images List" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/display"
