@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -60,16 +61,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class AsyncBitmapDownloader extends AsyncTask<String, Void, Bitmap>{
-        Bitmap mp;
-
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
-            ImageView img = (ImageView) findViewById(R.id.image);
+            Bitmap mp;
+            ImageView img;
+
             try {
+                mp = getResizedBitmap(bitmap,50,50);
+                img = (ImageView) findViewById(R.id.image);
                 img.setImageBitmap(mp);
-                img.setMaxWidth(50);
-                img.setMaxHeight(50);
             }
             catch (Exception e){Log.i("Pute","lel t nul");}
         }
@@ -81,27 +82,36 @@ public class MainActivity extends AppCompatActivity {
             for(int i = 0; i<strings.length;i++){
                 try {
                     url = new URL(strings[i]);
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-
-                    try {
-                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                        bm = BitmapFactory.decodeStream(in);
-                        Log.i("Pute","gg");
-                    }
-                    catch (Exception e){
-                        bm = null;
-                    }
-                    finally {
-                        urlConnection.disconnect();
-                    }
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
+                    HttpURLConnection connection = (HttpURLConnection) url
+                            .openConnection();
+                    connection.setDoInput(true);
+                    connection.connect();
+                    InputStream input = connection.getInputStream();
+                    bm = BitmapFactory.decodeStream(input);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    bm = null;
                 }
-            }
 
+            }
             return bm;
+        }
+
+        public Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
+            int width = bm.getWidth();
+            int height = bm.getHeight();
+            float scaleWidth = ((float) newWidth) / width;
+            float scaleHeight = ((float) newHeight) / height;
+            // CREATE A MATRIX FOR THE MANIPULATION
+            Matrix matrix = new Matrix();
+            // RESIZE THE BIT MAP
+            matrix.postScale(scaleWidth, scaleHeight);
+
+            // "RECREATE" THE NEW BITMAP
+            Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height,
+                    matrix, false);
+
+            return resizedBitmap;
         }
     }
 
@@ -176,3 +186,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
+/*
+ try {
+                    url = new URL(strings[i]);
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+                    try {
+                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                        bm = BitmapFactory.decodeStream(in);
+                        Log.i("Pute","gg");
+                    }
+                    catch (Exception e){
+                        bm = null;
+                    }
+                    finally {
+                        urlConnection.disconnect();
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+ */
