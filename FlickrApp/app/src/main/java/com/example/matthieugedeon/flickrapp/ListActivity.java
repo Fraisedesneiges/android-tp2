@@ -2,9 +2,11 @@ package com.example.matthieugedeon.flickrapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -32,8 +34,11 @@ public class ListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_list);
 
         ListView list = (ListView)findViewById(R.id.list);
-        MyAdapter adapter = new MyAdapter();
+        MyAdapter adapter = new MyAdapter(this,new Vector<String>());
         list.setAdapter(adapter);
+
+        AsyncFlickrJSONDataForList fetcher = new AsyncFlickrJSONDataForList(adapter);
+        fetcher.execute("https://www.flickr.com/services/feeds/photos_public.gne?tags=trees&format=json");
     }
 
     private String readStream(InputStream is) throws IOException {
@@ -46,30 +51,62 @@ public class ListActivity extends AppCompatActivity {
         return sb.toString();
     }
 
+    class Item{
+        String url;
+
+        public Item(String url){
+            this.url = url;
+        }
+    }
+
     class MyAdapter extends BaseAdapter{
-        Vector<String> vector;
+        private Context context; //context
+        private Vector<String> vector;
+
+        public MyAdapter(Context context, Vector<String> vector){
+            this.context = context;
+            this.vector = vector;
+        }
 
         @Override
         public int getCount() {
-            return 0;
+            return vector.size(); //returns total of items in the list
         }
 
         @Override
         public Object getItem(int position) {
-            return null;
+            return vector.get(position); //returns list item at the specified position
         }
 
         @Override
         public long getItemId(int position) {
-            return 0;
+            return position;
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            return null;
-        }
+            // inflate the layout for each list row
+            if (convertView == null) {
+                convertView = LayoutInflater.from(context).
+                        inflate(R.layout.list_item_layout, parent, false);
+            }
 
-        public void dd(String s){
+            // get current item to be displayed
+            String currentItem = (String) getItem(position);
+
+            // get the TextView for item name and item description
+            TextView textViewItemName = (TextView)
+                    convertView.findViewById(R.id.url);
+
+
+            //sets the text for item name and item description from the current item object
+            textViewItemName.setText(currentItem);
+
+
+            // returns the view for the current row
+            return convertView;
+        }
+        public void add(String s){
             vector.add(s);
         }
     }
@@ -78,7 +115,7 @@ public class ListActivity extends AppCompatActivity {
     class AsyncFlickrJSONDataForList extends AsyncTask<String, Void, JSONObject> {
 
         JSONObject data;
-        MyAdapter adapter
+        MyAdapter adapter;
         AsyncFlickrJSONDataForList(MyAdapter adapter){
             this.adapter = adapter;
         }
@@ -96,13 +133,18 @@ public class ListActivity extends AppCompatActivity {
                 array = new JSONArray();
             }
 
-
             String s;
             try {
 
+                for(int i = 0; i < array.length();i++){
+                    s = array.getJSONObject(i).getJSONObject("media").getString("m");
+                    adapter.add(s);
+                    Log.i("Adding url to adapter", s);
+                    adapter.notifyDataSetChanged();
+                }
             }
             catch (Exception e){
-                s = "";
+
             }
 
         }
