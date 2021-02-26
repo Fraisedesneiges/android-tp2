@@ -45,16 +45,20 @@ public class ListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
+        //Getting the list by its id and linking our tailored adapter to it
         ListView list = (ListView)findViewById(R.id.list);
         MyAdapter adapter = new MyAdapter(this,new Vector<String>());
         list.setAdapter(adapter);
 
+        //Launching the AsyncTask that download the JSON object containing several URLs for images from Flickr
         AsyncFlickrJSONDataForList fetcher = new AsyncFlickrJSONDataForList(adapter);
         fetcher.execute("https://www.flickr.com/services/feeds/photos_public.gne?tags=trees&format=json");
 
 
     }
 
+    //Function found on StackOverflow
+    //Construct a string from data extracted of a Stream
     private String readStream(InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();
         BufferedReader r = new BufferedReader(new InputStreamReader(is),1000);
@@ -65,14 +69,8 @@ public class ListActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-    class Item{
-        String url;
-
-        public Item(String url){
-            this.url = url;
-        }
-    }
-
+    //Found on StackOverflow
+    //Resize the Bitmap passed as a paramater
     public Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
         int width = bm.getWidth();
         int height = bm.getHeight();
@@ -90,6 +88,7 @@ public class ListActivity extends AppCompatActivity {
         return resizedBitmap;
     }
 
+    //Adapter that update our ListView through the fetched data
     class MyAdapter extends BaseAdapter{
         private Context context; //context
         private Vector<String> vector;
@@ -118,8 +117,8 @@ public class ListActivity extends AppCompatActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             // inflate the layout for each list row
             if (convertView == null) {
-                //convertView = LayoutInflater.from(context).inflate(R.layout.list_item_layout, parent, false);
-                convertView = LayoutInflater.from(context).inflate(R.layout.bitmap_layout, parent, false);
+                //convertView = LayoutInflater.from(context).inflate(R.layout.list_item_layout, parent, false); //inflate layout with text item
+                convertView = LayoutInflater.from(context).inflate(R.layout.bitmap_layout, parent, false); //inflate layout with image item
             }
 
             // get current item to be displayed
@@ -128,25 +127,28 @@ public class ListActivity extends AppCompatActivity {
             // get the TextView for item name and item description
             //TextView textViewItemName = (TextView) convertView.findViewById(R.id.url);
 
+            // get the ImageView for the fetched bitmap
             ImageView image = (ImageView) convertView.findViewById(R.id.image_item);
 
             // Get a RequestQueue
             RequestQueue queue = MySingleton.getInstance(context.getApplicationContext()).
                     getRequestQueue();
 
+            //Tailored Listener that is called each time a bitmap is fetched from Flickr via the Queue and the ImageRequests
             Response.Listener<Bitmap> rep_listener = response -> {
                 Bitmap mp;
                 try {
-                    mp = getResizedBitmap(response,50,50);
+                    mp = getResizedBitmap(response,500,500);
                     image.setImageBitmap(mp);
                 }
-                catch (Exception e){Log.i("Pute","lel t nul");}
+                catch (Exception e){}
             };
 
+            //Request element that takes as attributes an URL, a listener, Sizing elements, a ScaleType, a Config and an Error Listener
             ImageRequest request = new ImageRequest(
                     currentItem, rep_listener
-                    , 50,
-                    50, ImageView.ScaleType.FIT_CENTER, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+                    , 500,
+                    500, ImageView.ScaleType.FIT_CENTER, Bitmap.Config.RGB_565, new Response.ErrorListener() {
 
                 @Override
                 public void onErrorResponse(VolleyError error) {
@@ -167,7 +169,7 @@ public class ListActivity extends AppCompatActivity {
         }
     }
 
-
+    //AsyncTask that downloads a JSON object containing several URLs from Flickr and that adds them to the Vector of our Adapter
     class AsyncFlickrJSONDataForList extends AsyncTask<String, Void, JSONObject> {
 
         JSONObject data;
@@ -183,7 +185,6 @@ public class ListActivity extends AppCompatActivity {
             JSONArray array;
             try {
                 array = data.getJSONArray("items");
-                Log.i("NTM",array.toString());
             }
             catch (Exception e){
                 array = new JSONArray();
@@ -193,9 +194,15 @@ public class ListActivity extends AppCompatActivity {
             try {
 
                 for(int i = 0; i < array.length();i++){
+
+                    //Extract the image URL from the JSONObject
                     s = array.getJSONObject(i).getJSONObject("media").getString("m");
+                    //Add the URL to the adapter linked to our ListView
                     adapter.add(s);
-                    Log.i("Adding url to adapter", s);
+
+                    Log.i("JFL","Adding url to adapter"+ s);
+
+                    //Notify our adapter that its data set has been updated
                     adapter.notifyDataSetChanged();
                 }
             }
@@ -242,6 +249,7 @@ public class ListActivity extends AppCompatActivity {
         }
     }
 
+    //Singleton class taken from the Android Developers to handle the Volley library requests
     static class MySingleton {
         private static MySingleton instance;
         private RequestQueue requestQueue;

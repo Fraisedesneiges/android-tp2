@@ -39,9 +39,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Finding the fetch button by it's id and linking a tailored onClickListener
         Button b1=(Button)findViewById(R.id.fetch_button);
         b1.setOnClickListener(new GetImageOnClickListener());
 
+        //Linking an anonymous onClickListener to the list button
         Button b2 = (Button) findViewById(R.id.list_button);
         b2.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //Function found on StackOverflow
+    //Construct a string from data extracted of a Stream
     private String readStream(InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();
         BufferedReader r = new BufferedReader(new InputStreamReader(is),1000);
@@ -63,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         return sb.toString();
     }
 
+    //Tailored onClickListener that launch our parameterized AsyncTask
     class GetImageOnClickListener implements View.OnClickListener{
         @Override
         public void onClick(View v) {
@@ -72,25 +77,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //AsyncTask that has for purpose to fetched a bitmap image from a given URL (in our case a Flickr URL)
     class AsyncBitmapDownloader extends AsyncTask<String, Void, Bitmap>{
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
+            //Resizing our Bitmap result from doInBackground and setting it into the image ImageView
             Bitmap mp;
             ImageView img;
 
             try {
-                mp = getResizedBitmap(bitmap,50,50);
+                mp = getResizedBitmap(bitmap,500,500);
                 img = (ImageView) findViewById(R.id.image);
                 img.setImageBitmap(mp);
             }
-            catch (Exception e){Log.i("Pute","lel t nul");}
+            catch (Exception e){Log.i("ERROR","Setting Bitmap to ImageView failed");}
         }
 
         @Override
         protected Bitmap doInBackground(String... strings) {
             URL url;
             Bitmap bm = null;
+
+            //In case of several URL, strings being an array of n elements
             for(int i = 0; i<strings.length;i++){
                 try {
                     url = new URL(strings[i]);
@@ -99,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
                     connection.setDoInput(true);
                     connection.connect();
                     InputStream input = connection.getInputStream();
+
+                    //Receive a bitmap from the stream of the connection
                     bm = BitmapFactory.decodeStream(input);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -109,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
             return bm;
         }
 
+        //Found on StackOverflow
+        //Resize the Bitmap passed as a paramater
         public Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
             int width = bm.getWidth();
             int height = bm.getHeight();
@@ -127,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //AsyncTask to get the JSON object containing several URLs from Flickr
     class AsyncFlickrJSONData extends AsyncTask<String, Void, JSONObject>{
 
         JSONObject data;
@@ -153,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
                 s = "";
             }
 
+            //Calling the bitmap downloader in an AsyncTask to get the image from the Flickr URL fetched on the first AsyncTask
             AsyncBitmapDownloader imgDownloader = new AsyncBitmapDownloader();
             imgDownloader.execute(s);
 
@@ -175,10 +190,10 @@ public class MainActivity extends AppCompatActivity {
                         Log.i("JFL", s);
                         Log.i("Size", String.valueOf(s.length()));
 
+                        //Trim the unwanted part of the fetched string
                         s = s.replace("jsonFlickrFeed(","");
-                        Log.i("pété", s);
+                        //remove the remaining ")" of the jsonFlickrFeed(
                         s = s.subSequence(0,s.length()-1).toString();
-                        Log.i("chié", s);
                         try{
                             data = new JSONObject(s);
                         }
@@ -198,28 +213,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
 }
-
-/*
- try {
-                    url = new URL(strings[i]);
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-
-                    try {
-                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                        bm = BitmapFactory.decodeStream(in);
-                        Log.i("Pute","gg");
-                    }
-                    catch (Exception e){
-                        bm = null;
-                    }
-                    finally {
-                        urlConnection.disconnect();
-                    }
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
- */
