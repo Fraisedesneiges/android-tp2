@@ -3,15 +3,27 @@ package com.example.matthieugedeon.flickrapp;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.ImageRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,6 +51,8 @@ public class ListActivity extends AppCompatActivity {
 
         AsyncFlickrJSONDataForList fetcher = new AsyncFlickrJSONDataForList(adapter);
         fetcher.execute("https://www.flickr.com/services/feeds/photos_public.gne?tags=trees&format=json");
+
+
     }
 
     private String readStream(InputStream is) throws IOException {
@@ -57,6 +71,23 @@ public class ListActivity extends AppCompatActivity {
         public Item(String url){
             this.url = url;
         }
+    }
+
+    public Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height,
+                matrix, false);
+
+        return resizedBitmap;
     }
 
     class MyAdapter extends BaseAdapter{
@@ -87,21 +118,46 @@ public class ListActivity extends AppCompatActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             // inflate the layout for each list row
             if (convertView == null) {
-                convertView = LayoutInflater.from(context).
-                        inflate(R.layout.list_item_layout, parent, false);
+                //convertView = LayoutInflater.from(context).inflate(R.layout.list_item_layout, parent, false);
+                convertView = LayoutInflater.from(context).inflate(R.layout.bitmap_layout, parent, false);
             }
 
             // get current item to be displayed
             String currentItem = (String) getItem(position);
 
             // get the TextView for item name and item description
-            TextView textViewItemName = (TextView)
-                    convertView.findViewById(R.id.url);
+            //TextView textViewItemName = (TextView) convertView.findViewById(R.id.url);
 
+            ImageView image = (ImageView) convertView.findViewById(R.id.image_item);
+
+            // Get a RequestQueue
+            RequestQueue queue = MySingleton.getInstance(context.getApplicationContext()).
+                    getRequestQueue();
+
+            Response.Listener<Bitmap> rep_listener = response -> {
+                Bitmap mp;
+                try {
+                    mp = getResizedBitmap(response,50,50);
+                    image.setImageBitmap(mp);
+                }
+                catch (Exception e){Log.i("Pute","lel t nul");}
+            };
+
+            ImageRequest request = new ImageRequest(
+                    currentItem, rep_listener
+                    , 50,
+                    50, ImageView.ScaleType.FIT_CENTER, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+
+                @Override
+                public void onErrorResponse(VolleyError error) {
+
+                }});
 
             //sets the text for item name and item description from the current item object
-            textViewItemName.setText(currentItem);
+            //textViewItemName.setText(currentItem);
 
+            // Access the RequestQueue through your singleton class.
+            MySingleton.getInstance(context).addToRequestQueue(request);
 
             // returns the view for the current row
             return convertView;
@@ -184,6 +240,58 @@ public class ListActivity extends AppCompatActivity {
                 }
             }
             return data;
+        }
+    }
+
+    static class MySingleton {
+        private static MySingleton instance;
+        private RequestQueue requestQueue;
+        private ImageLoader imageLoader;
+        private static Context ctx;
+
+        private MySingleton(Context context) {
+            ctx = context;
+            requestQueue = getRequestQueue();
+
+            imageLoader = new ImageLoader(requestQueue,
+                    new ImageLoader.ImageCache() {
+                        private final LruCache<String, Bitmap>
+                                cache = new LruCache<String, Bitmap>(20);
+
+                        @Override
+                        public Bitmap getBitmap(String url) {
+                            return cache.get(url);
+                        }
+
+                        @Override
+                        public void putBitmap(String url, Bitmap bitmap) {
+                            cache.put(url, bitmap);
+                        }
+                    });
+        }
+
+        public static synchronized MySingleton getInstance(Context context) {
+            if (instance == null) {
+                instance = new MySingleton(context);
+            }
+            return instance;
+        }
+
+        public RequestQueue getRequestQueue() {
+            if (requestQueue == null) {
+                // getApplicationContext() is key, it keeps you from leaking the
+                // Activity or BroadcastReceiver if someone passes one in.
+                requestQueue = Volley.newRequestQueue(ctx.getApplicationContext());
+            }
+            return requestQueue;
+        }
+
+        public <T> void addToRequestQueue(Request<T> req) {
+            getRequestQueue().add(req);
+        }
+
+        public ImageLoader getImageLoader() {
+            return imageLoader;
         }
     }
 }

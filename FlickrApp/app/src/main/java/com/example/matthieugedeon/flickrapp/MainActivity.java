@@ -2,6 +2,7 @@ package com.example.matthieugedeon.flickrapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -196,6 +197,8 @@ public class MainActivity extends AppCompatActivity {
             return data;
         }
     }
+
+
 }
 
 /*
