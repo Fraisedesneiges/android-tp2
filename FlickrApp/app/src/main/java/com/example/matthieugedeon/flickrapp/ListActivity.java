@@ -221,9 +221,8 @@ public class ListActivity extends AppCompatActivity {
                         Log.i("Size", String.valueOf(s.length()));
 
                         s = s.replace("jsonFlickrFeed(","");
-                        Log.i("pété", s);
                         s = s.subSequence(0,s.length()-1).toString();
-                        Log.i("chié", s);
+
                         try{
                             data = new JSONObject(s);
                         }
